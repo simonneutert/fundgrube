@@ -17,7 +17,7 @@ after cloning this project, adjust the "url" to your needs, currently it will sh
    ```
 3. `$ bb fundgrube.clj`
 4. profit
-5. bro out
+5. bro down
 
 ## credits
 
