@@ -6,7 +6,7 @@ not a script i would show my mother-in-law and brag about it... but, ..., well, 
 
 after cloning this project, adjust the "url" to your needs, currently it will show results for MediaMarkt Mainz
 
-1. install babashka
+1. install [babashka](https://github.com/babashka/babashka)
 2. setup your environment 
    ```bash
    export FUNDGRUBE_TGRAM_API_KEY="1234567:ABCDEFGH-XYZ123"
