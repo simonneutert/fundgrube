@@ -5,7 +5,10 @@
 (require '[babashka.fs :as fs])
 
 ;; adjust to your needs, using the dev tools and inspecting the fundgrube
-(def url "https://www.mediamarkt.de/de/data/fundgrube/api/postings?limit=100&offset=0&outletIds=418&recentFilter=outlets")
+(def url
+  (str "https://www.mediamarkt.de/de/data/fundgrube/api/postings?limit=100&offset=0&outletIds="
+       (or (System/getenv "FUNDGRUBE_OUTLET_IDS") "418,576,798")
+       "&recentFilter=outlets"))
 
 (def filename-current-results "data_fundgrube.edn")
 (def filename-past-results "data_fundgrube_old.edn")
@@ -25,7 +28,8 @@
     (cset/difference (set (keys new)) (set (keys old)))))
 
 (defn product->text [product]
-  (str (:name product) "\n\n"
+  (str "Markt: " (get-in product [:outlet :name]) "\n"
+       "Produkt: " (:name product) "\n\n"
        "Preis: " (:price product) " €"
        "\n\n"
        (:posting_text product) "\n"
