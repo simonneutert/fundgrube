@@ -14,6 +14,8 @@ this tool curls through MediaMarkts public [Fundgrube](https://www.mediamarkt.de
 
 Results are written to the filesystem utilizing Clojure's [edn data notation](https://github.com/edn-format/edn). The file with the last results is being copied and renamed, to serve as the source to identify changes (new postings/products in the Fundgrube 🤫).
 
+Identified changes (products / postings) are then being sent to the telegram bot 🤖
+
 Here's an example of how a post to telegram could look like:
 
 ```text
