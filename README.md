@@ -2,23 +2,61 @@
 
 not a script i would show my mother-in-law and brag about it... but, ..., well, it does the job 😅 
 
-## howto
+## why?
 
-after cloning this project, adjust the "url" to your needs, currently it will show results for MediaMarkt Mainz
+The Fundgrube does not offer sorting, filtering or anything you would call useful as a user. 
+
+## what and how?
+
+this tool curls through MediaMarkts public [Fundgrube](https://www.mediamarkt.de/de/data/fundgrube) API. 
+
+**IMPORTANT** You need an active [telegram bot](https://core.telegram.org/bots/faq#how-do-i-create-a-bot) to use this script!
+
+Results are written to the filesystem utilizing Clojure's [edn data notation](https://github.com/edn-format/edn). The file with the last results is being copied and renamed, to serve as the source to identify changes (new postings/products in the Fundgrube 🤫).
+
+Here's an example of how a post to telegram could look like:
+
+```text
+Markt: Wiesbaden-Hasengarten
+Produkt: PHILIPS 58PUS8546/12 LED TV (Flat, 58 Zoll / 146 cm, UHD 4K, SMART TV, Ambilight, Android TV™ 10 (Q))
+
+Preis: 700.00 €
+
+Artikel 2734789
+-
+LED TV / 146cm/58Zoll / UHD 4K,
+Ultra Resolution, Dolby Vision, HDR10+, Micro Dimming Pro, ISF-Farbmanagement,
+2 x 10 W Full-Range-Lautsprecher,
+Ausschalt-Timer, Lichtsensor, Bildabschaltung (bei Radiobetrieb), Eco-Modus
+https://assets.mmsrg.com/is/166325/12975367df8e182e57044734f5165e190/c3/-/29336490249241a3925bcb97e235b830
+```
+
+## Run
+
+after cloning this project, setup your environment variables. Please check the outlet ids of your interest given below!
 
 1. install [babashka](https://github.com/babashka/babashka)
 2. setup your environment 
    ```bash
    export FUNDGRUBE_OUTLET_IDS="418,576,798"
    export FUNDGRUBE_TGRAM_API_KEY="1234567:ABCDEFGH-XYZ123"
-   # you can find your channel id by logging into web.telegram.org
-   # selecting your channel
-   # don't forget to prepend 100 🤷‍♂️
+   # you can find your channel/group/chat id by logging into web.telegram.org
+   # selecting your channel/group/chat
+   # BONUS: don't forget to prepend 100 🤷‍♂️ if your bot should post to a channel
    export FUNDGRUBE_TGRAM_CHANNEL="-100mychannelid"
    ```
 3. `$ bb fundgrube.clj`
 4. profit
 5. bro down
+
+### setup cronjobs
+
+clone the product to your server, install babashka with the [Quickstart script](https://github.com/babashka/babashka#quickstart) or pick another method, but for Debian based, the script is the way to go. As it will put `bb` in your path and set everything up correctly. Borkdude is trustworthy, the day he goes BlackHat will be a day we all will remember. 
+
+```bash
+# have your environment variables stored/set in `.profile` 🤗
+0,15,30,45 9-15 * * 1-6 cd /home/superman/fundgrube; source /home/superman/.profile; bb /home/superman/fundgrube/fundgrube.clj
+```
 
 ## credits
 
