@@ -72,9 +72,13 @@
 
 (defn build-file-structure
   [json-data]
-  (let [fundgrube-current (reduce #(assoc %1 (:name %2) %2) {} json-data)]
+  (let [fundgrube-current (reduce #(assoc %1 (:posting_id %2) %2) {} json-data)]
     (pretty-spit filename-current-results fundgrube-current)
     fundgrube-current))
+
+(defn past-fundgrube-results
+  []
+  (clojure.edn/read-string (slurp filename-past-results)))
 
 (if (fs/exists? filename-current-results)
   (fs/move filename-current-results filename-past-results {:replace-existing true})
@@ -83,6 +87,9 @@
 (let [json-data (get-json-data url 50 0)
       fundgrube-current (build-file-structure json-data)
       diff-result (diff-fundgrube-results)]
-  (if (= (count (set (keys fundgrube-current))) (count diff-result))
-    (prn "done")
-    (send-to-tgram fundgrube-current diff-result)))
+  (if (and
+       (> (count (keys (past-fundgrube-results))) 0)
+       (> (count (keys fundgrube-current)) 0)
+       (> (count diff-result) 0))
+    (send-to-tgram fundgrube-current diff-result)
+    (prn "done")))
