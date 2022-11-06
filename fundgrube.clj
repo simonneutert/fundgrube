@@ -4,22 +4,40 @@
 (require '[clojure.edn :as edn])
 (require '[babashka.fs :as fs])
 
-;; adjust to your needs, using the dev tools and inspecting the fundgrube
+(def fundgrube-tgram-api-key (System/getenv "FUNDGRUBE_TGRAM_API_KEY"))
+(def fundgrube-tgram-channel (System/getenv "FUNDGRUBE_TGRAM_CHANNEL"))
+(def fundgrube-outlet-ids (or (System/getenv "FUNDGRUBE_OUTLET_IDS") "418,576,798"))
+
 (def url "https://www.mediamarkt.de/de/data/fundgrube/api/postings")
 (def filename-current-results "data_fundgrube.edn")
 (def filename-past-results "data_fundgrube_old.edn")
 
 (defn pretty-spit [filename content]
-  (spit filename (with-out-str (clojure.pprint/pprint content))))
+  (->> content
+       clojure.pprint/pprint
+       with-out-str
+       (spit filename)))
+
+(defn slurp-read-edn
+  [filename]
+  (edn/read-string (slurp filename)))
+
+(defn past-fundgrube-results
+  []
+  (slurp-read-edn filename-past-results))
+
+(defn current-fundgrube-result
+  []
+  (slurp-read-edn filename-current-results))
 
 (defn get-postings
   [url limit offset]
-  (curl/get url  {:headers {"Accept" "application/json"
-                            "User-Agent" "Bacon/1.0"}
-                  :query-params {"outletIds" (or (System/getenv "FUNDGRUBE_OUTLET_IDS") "418,576,798")
-                                 "recentFilter" "outlets"
-                                 "offset" offset
-                                 "limit" limit}}))
+  (curl/get url {:headers {"Accept" "application/json"
+                           "User-Agent" "Bacon/1.0"}
+                 :query-params {"outletIds" fundgrube-outlet-ids
+                                "recentFilter" "outlets"
+                                "offset" offset
+                                "limit" limit}}))
 
 (defn extract-json-body
   [resp]
@@ -37,59 +55,67 @@
         :else (recur (apply conj collection (:postings api-data)) (+ 50 offset))))))
 
 (defn diff-fundgrube-results
-  []
-  (let [old (edn/read-string (slurp filename-past-results))
-        new (edn/read-string (slurp filename-current-results))]
-    (cset/difference (set (keys new)) (set (keys old)))))
+  [current-fundgrube-result]
+  (cset/difference (set (keys current-fundgrube-result))
+                   (set (keys (past-fundgrube-results)))))
 
 (defn product->text
   [product]
   (str "Markt: " (get-in product [:outlet :name]) "\n"
        "Produkt: " (:name product) "\n\n"
-       "Preis: " (:price product) " €"
-       "\n\n"
+       "Preis: " (:price product) " €" "\n"
+       "\n"
        (:posting_text product) "\n"
        (first (:original_url product))))
 
-(defn tgram-url
-  []
-  (str "https://api.telegram.org/bot"
-       (System/getenv "FUNDGRUBE_TGRAM_API_KEY")
-       "/sendMessage"))
+(def tgram-url
+  (str "https://api.telegram.org/bot" fundgrube-tgram-api-key "/sendMessage"))
 
-(defn json-content
+(defn format-json-content
   [product]
-  (json/encode {"chat_id" (System/getenv "FUNDGRUBE_TGRAM_CHANNEL")
+  (json/encode {"chat_id" fundgrube-tgram-channel
                 "text" (product->text product)}))
 
-(defn send-to-tgram
-  [fundgrube-current diff-result]
-  (for [result diff-result]
-    (let [product (get fundgrube-current result)
-          url (tgram-url)]
-      (curl/post url {:headers {"Content-Type" "application/json"}
-                      :body (json-content product)}))))
-
 (defn build-file-structure
-  [json-data]
-  (let [fundgrube-current (reduce #(assoc %1 (:posting_id %2) %2) {} json-data)]
-    (pretty-spit filename-current-results fundgrube-current)
-    fundgrube-current))
+  "restructures the json data by extracting the value of a key of the object
+   and setting it as new key with object itself as the value.
+   
+   example, when `:a` is the new key:
+   ```clojure
+   (build-file-structure :a [{:a \"xxx\", :b 1, :c 2}, {:a \"yyy\", :b 3, :c 4}])
+   ;;=> {\"xxx\" {:a \"xxx\", :b 1, :c 2}, \"yyy\" {:a \"yyy\", :b 3, :c 4}}
+   ```
+   "
+  [k json-data]
+  (reduce #(assoc %1 (k %2) %2) {} json-data))
 
-(defn past-fundgrube-results
-  []
-  (clojure.edn/read-string (slurp filename-past-results)))
+(defn send-to-tgram
+  [fundgrube-current-results diff-result]
+  (let [data (pmap (fn [result]
+                     (let [product (get fundgrube-current-results result)]
+                       {:headers {"Content-Type" "application/json"}
+                        :body (format-json-content product)})) diff-result)]
+    (loop [content data]
+      (if (first content)
+        ((curl/post tgram-url (first content))
+         (Thread/sleep 15000)
+         (recur (rest content)))
+        (str "Sent " (count diff-result) " items.")))))
+
+(defn new-postings-in-fundgrube?
+  [fundgrube-current diff-result]
+  (and (> (count (keys fundgrube-current)) 0)
+       (> (count diff-result) 0)
+       (> (count (keys (past-fundgrube-results))) 0)))
 
 (if (fs/exists? filename-current-results)
-  (fs/move filename-current-results filename-past-results {:replace-existing true})
+  (fs/copy filename-current-results filename-past-results {:replace-existing true})
   (spit filename-past-results {}))
 
 (let [json-data (get-json-data url 50 0)
-      fundgrube-current (build-file-structure json-data)
-      diff-result (diff-fundgrube-results)]
-  (if (and
-       (> (count (keys (past-fundgrube-results))) 0)
-       (> (count (keys fundgrube-current)) 0)
-       (> (count diff-result) 0))
+      fundgrube-current (build-file-structure :posting_id json-data)
+      diff-result (diff-fundgrube-results fundgrube-current)]
+  (pretty-spit filename-current-results fundgrube-current)
+  (if (new-postings-in-fundgrube? fundgrube-current diff-result)
     (send-to-tgram fundgrube-current diff-result)
-    (prn "done")))
+    (prn "job done, nothing sent")))
