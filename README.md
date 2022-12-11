@@ -12,6 +12,9 @@ this tool curls through MediaMarkts public [Fundgrube](https://www.mediamarkt.de
 
 **IMPORTANT** You need an active [telegram bot](https://core.telegram.org/bots/faq#how-do-i-create-a-bot) to use this script!
 
+**AND** just the 5 newest pages are being tracked, if you don't set scope on certain outlet ids `export FUNDGRUBE_OUTLET_IDS="418,576,798"` !  
+NOT setting this env will track all outlets.
+
 Results are written to the filesystem utilizing Clojure's [edn data notation](https://github.com/edn-format/edn). The file with the last results is being copied and renamed, to serve as the source to identify changes (new postings/products in the Fundgrube 🤫).
 
 Identified changes (products / postings) are then being sent to the telegram bot 🤖
