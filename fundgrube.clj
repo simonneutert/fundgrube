@@ -6,7 +6,7 @@
 
 (def fundgrube-tgram-api-key (System/getenv "FUNDGRUBE_TGRAM_API_KEY"))
 (def fundgrube-tgram-channel (System/getenv "FUNDGRUBE_TGRAM_CHANNEL"))
-(def fundgrube-outlet-ids (or (System/getenv "FUNDGRUBE_OUTLET_IDS") "418,576,798"))
+(def fundgrube-outlet-ids (or (System/getenv "FUNDGRUBE_OUTLET_IDS") ""))
 
 (def url "https://www.mediamarkt.de/de/data/fundgrube/api/postings")
 (def filename-current-results "data_fundgrube.edn")
@@ -47,12 +47,15 @@
 
 (defn get-json-data
   [url limit offset]
-  (loop [collection []
-         offset offset]
-    (let [api-data (extract-json-body (get-postings url limit offset))]
-      (cond
-        (empty? (:postings api-data)) collection
-        :else (recur (apply conj collection (:postings api-data)) (+ 50 offset))))))
+  (let [virtual-limit (if (empty? fundgrube-outlet-ids) 5 -1)]
+    (loop [collection []
+           offset offset
+           run 0]
+      (let [api-data (extract-json-body (get-postings url limit offset))]
+        (cond
+          (= run virtual-limit) collection
+          (empty? (:postings api-data)) collection
+          :else (recur (apply conj collection (:postings api-data)) (+ 50 offset) (inc run)))))))
 
 (defn diff-fundgrube-results
   [current-fundgrube-result]
