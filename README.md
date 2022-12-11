@@ -43,12 +43,14 @@ after cloning this project, setup your environment variables. Please check the o
 1. install [babashka](https://github.com/babashka/babashka)
 2. setup your environment 
    ```bash
-   export FUNDGRUBE_OUTLET_IDS="418,576,798"
    export FUNDGRUBE_TGRAM_API_KEY="1234567:ABCDEFGH-XYZ123"
    # you can find your channel/group/chat id by logging into web.telegram.org
    # selecting your channel/group/chat
    # BONUS: don't forget to prepend 100 🤷‍♂️ if your bot should post to a channel
    export FUNDGRUBE_TGRAM_CHANNEL="-100mychannelid"
+
+   # !!! THIS IS OPTIONAL !!!
+   export FUNDGRUBE_OUTLET_IDS="418,576,798"
    ```
 3. `$ bb fundgrube.clj`
 4. profit
