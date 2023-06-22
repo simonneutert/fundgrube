@@ -52,6 +52,7 @@
            offset offset
            run 0]
       (let [api-data (extract-json-body (get-postings url limit offset))]
+        (Thread/sleep 5000) ;; avoid rate limiting
         (cond
           (= run virtual-limit) collection
           (empty? (:postings api-data)) collection
