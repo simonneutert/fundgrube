@@ -1,4 +1,5 @@
 data_fundgrube*.edn
+.env*
 
 # visual code
 /*.vsix

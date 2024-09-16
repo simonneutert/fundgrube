@@ -1,21 +1,25 @@
-# fundgrube
+# FUNDGRUBE
 
 not a script i would show my mother-in-law and brag about it... but, ..., well, it does the job 😅 
 
-## why?
+## Why?
 
-The Fundgrube does not offer sorting, filtering or anything you would call useful as a user. 
+At the time of writing this piece of bits, the "Fundgrube" did not offer sorting, filtering or anything you would call useful for a user.
 
-## what and how?
+> But its a proper online shop with all the bells and whistles since then 🎉
+
+## What and how?
 
 this tool curls through MediaMarkts public [Fundgrube](https://www.mediamarkt.de/de/data/fundgrube) API. 
 
-**IMPORTANT** You need an active [telegram bot](https://core.telegram.org/bots/faq#how-do-i-create-a-bot) to use this script!
+**IMPORTANT** You may want an active [telegram bot](https://core.telegram.org/bots/faq#how-do-i-create-a-bot) to use this script!
 
 **AND** just the 5 newest pages are being tracked, if you don't set scope on certain outlet ids `export FUNDGRUBE_OUTLET_IDS="418,576,798"` !  
 NOT setting this env will track all outlets.
 
 Results are written to the filesystem utilizing Clojure's [edn data notation](https://github.com/edn-format/edn). The file with the last results is being copied and renamed, to serve as the source to identify changes (new postings/products in the Fundgrube 🤫).
+
+You need JSON not EDN? [Use jet](https://github.com/borkdude/jet)!
 
 Identified changes (products / postings) are then being sent to the telegram bot 🤖
 
@@ -38,7 +42,7 @@ https://assets.mmsrg.com/is/166325/12975367df8e182e57044734f5165e190/c3/-/293364
 
 ## Run
 
-after cloning this project, setup your environment variables. Please check the outlet ids of your interest given below!
+After cloning this project, setup your environment variables. Please, check the outlet ids of your interest given below!
 
 1. install [babashka](https://github.com/babashka/babashka)
 2. setup your environment 
@@ -56,7 +60,7 @@ after cloning this project, setup your environment variables. Please check the o
 4. profit
 5. bro down
 
-### setup cronjobs
+### Setup Cronjobs
 
 clone the product to your server, install babashka with the [Quickstart script](https://github.com/babashka/babashka#quickstart) or pick another method, but for Debian based, the script is the way to go. As it will put `bb` in your path and set everything up correctly. Borkdude is trustworthy, the day he goes BlackHat will be a day we all will remember. 
 
@@ -65,7 +69,7 @@ clone the product to your server, install babashka with the [Quickstart script](
 0,15,30,45 9-15 * * 1-6 cd /home/superman/fundgrube; source /home/superman/.profile; bb /home/superman/fundgrube/fundgrube.clj
 ```
 
-## credits
+## Credits / Inspiration
 
 inspired by: [RomanNess/fundgrube-crawler](https://github.com/RomanNess/fundgrube-crawler)
 
@@ -79,7 +83,8 @@ cat outlets.json | \
    jq -s '{outlets: .}' > outlets_jq.json
 ```
 
-### Outlets (isActive == true) @2022-11-01
+<details>
+  <summary>### Outlets (isActive == true) @2022-11-01</summary>
 
 ```json
 {
@@ -336,3 +341,5 @@ cat outlets.json | \
   ]
 }
 ```
+
+</details>

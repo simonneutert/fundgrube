@@ -8,6 +8,12 @@
 (def fundgrube-tgram-channel (System/getenv "FUNDGRUBE_TGRAM_CHANNEL"))
 (def fundgrube-outlet-ids (or (System/getenv "FUNDGRUBE_OUTLET_IDS") ""))
 
+(def send-to-tgram?
+  (if (and fundgrube-tgram-api-key
+           fundgrube-tgram-channel)
+    true
+    false))
+
 (def url "https://www.mediamarkt.de/de/data/fundgrube/api/postings")
 (def filename-current-results "data_fundgrube.edn")
 (def filename-past-results "data_fundgrube_old.edn")
@@ -26,9 +32,9 @@
   []
   (slurp-read-edn filename-past-results))
 
-(defn current-fundgrube-result
-  []
-  (slurp-read-edn filename-current-results))
+;; (defn current-fundgrube-result
+;;   []
+;;   (slurp-read-edn filename-current-results))
 
 (defn get-postings
   [url limit offset]
@@ -121,5 +127,5 @@
       diff-result (diff-fundgrube-results fundgrube-current)]
   (pretty-spit filename-current-results fundgrube-current)
   (if (new-postings-in-fundgrube? fundgrube-current diff-result)
-    (send-to-tgram fundgrube-current diff-result)
-    (prn "job done, nothing sent")))
+    (if send-to-tgram? (send-to-tgram fundgrube-current diff-result) (prn "Sending to tgram is not setup ..."))
+    (prn "job done, but nothing new found")))
